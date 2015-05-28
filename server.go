@@ -61,5 +61,8 @@ func main() {
 	}()
 
 	http.HandleFunc("/", defaultHandler)
-	http.ListenAndServe(*if_bind, nil)
+	err := http.ListenAndServe(*if_bind, nil)
+	if err != nil {
+		panic(err)
+	}
 }
