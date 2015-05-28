@@ -8,14 +8,13 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
 )
 
 var DEBUG = false
-var port *int
+var if_bind *string
 var apps_target *string
 var management_target *string
 var apps_proxy *httputil.ReverseProxy
@@ -36,12 +35,12 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	port = flag.Int("port", 3001, "server port")
-	apps_target = flag.String("apps", "http://localhost:8080", "target URL for apps reverse proxy")
-	management_target = flag.String("management", "http://localhost:8081", "target URL for management reverse proxy")
+	if_bind = flag.String("interface", "127.0.0.1:3001", "server interface to bind")
+	apps_target = flag.String("apps", "http://127.0.0.1:8080", "target URL for apps reverse proxy")
+	management_target = flag.String("management", "http://127.0.0.1:8081", "target URL for management reverse proxy")
 	flag.Parse()
 
-	fmt.Printf("Port:           %v\n", *port)
+	fmt.Printf("Interface:      %v\n", *if_bind)
 	fmt.Printf("Apps-Url:       %v\n", *apps_target)
 	fmt.Printf("Management-Url: %v\n", *management_target)
 
@@ -62,5 +61,5 @@ func main() {
 	}()
 
 	http.HandleFunc("/", defaultHandler)
-	http.ListenAndServe(":"+strconv.Itoa(*port), nil)
+	http.ListenAndServe(*if_bind, nil)
 }
