@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -24,7 +25,8 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 	if DEBUG {
 		fmt.Printf("[%v] %+v\n", time.Now(), req)
 	}
-	if last := len(req.URL.Path); req.URL.Path[last-1:] != "/" {
+	ext := path.Ext(req.URL.Path)
+	if last := len(req.URL.Path); ext == "" && req.URL.Path[last-1:] != "/" {
 		req.URL.Path = req.URL.Path + "/"
 	}
 	if strings.HasPrefix(req.URL.String(), "/protonet/") {
