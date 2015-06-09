@@ -26,7 +26,10 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Printf("[%v] %+v\n", time.Now(), req)
 	}
 	ext := path.Ext(req.URL.Path)
-	if last := len(req.URL.Path); ext == "" && req.URL.Path[last-1:] != "/" {
+	if req.URL.Path == "/" {
+		url := req.URL.Path + "/admin/"
+		http.Redirect(w, req, url, http.StatusMovedPermanently)
+	} else if last := len(req.URL.Path); ext == "" && req.URL.Path[last-1:] != "/" {
 		url := req.URL.Path + "/" // Always redirect with trailing slash
 		http.Redirect(w, req, url, http.StatusMovedPermanently)
 	} else if strings.HasPrefix(req.URL.String(), "/admin/") {
