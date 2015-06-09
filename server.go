@@ -27,9 +27,9 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	ext := path.Ext(req.URL.Path)
 	if last := len(req.URL.Path); ext == "" && req.URL.Path[last-1:] != "/" {
-		req.URL.Path = req.URL.Path + "/"
-	}
-	if strings.HasPrefix(req.URL.String(), "/protonet/") {
+		url := req.URL.Path + "/" // Always redirect with trailing slash
+		http.Redirect(w, req, url, http.StatusMovedPermanently)
+	} else if strings.HasPrefix(req.URL.String(), "/admin/") {
 		management_proxy.ServeHTTP(w, req)
 	} else {
 		apps_proxy.ServeHTTP(w, req)
