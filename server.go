@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -21,18 +20,18 @@ var management_target *string
 var apps_proxy *httputil.ReverseProxy
 var management_proxy *httputil.ReverseProxy
 
+var ADMIN_NAME = "admin"
+var ADMIN_PATH = "/" + ADMIN_NAME
+var ADMIN_FULL_PATH = ADMIN_PATH + "/"
+
 func defaultHandler(w http.ResponseWriter, req *http.Request) {
 	if DEBUG {
 		fmt.Printf("[%v] %+v\n", time.Now(), req)
 	}
-	ext := path.Ext(req.URL.Path)
-	if req.URL.Path == "/" {
-		url := req.URL.Path + "/admin/"
-		http.Redirect(w, req, url, http.StatusMovedPermanently)
-	} else if last := len(req.URL.Path); ext == "" && req.URL.Path[last-1:] != "/" {
-		url := req.URL.Path + "/" // Always redirect with trailing slash
-		http.Redirect(w, req, url, http.StatusMovedPermanently)
-	} else if strings.HasPrefix(req.URL.String(), "/admin/") {
+	urlPath := req.URL.Path
+	if urlPath == "/" || urlPath == "" || urlPath == ADMIN_PATH {
+		http.Redirect(w, req, ADMIN_FULL_PATH, http.StatusMovedPermanently)
+	} else if strings.HasPrefix(req.URL.String(), ADMIN_FULL_PATH) {
 		management_proxy.ServeHTTP(w, req)
 	} else {
 		apps_proxy.ServeHTTP(w, req)
