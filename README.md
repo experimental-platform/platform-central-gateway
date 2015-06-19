@@ -26,3 +26,4 @@ The following illustration show both possible forward destinations.
 │ (Admin Interface) │   │      (Apps)       │
 └───────────────────┘   └───────────────────┘
 ```
+
