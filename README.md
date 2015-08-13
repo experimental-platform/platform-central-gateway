@@ -33,3 +33,17 @@ The following illustration show both possible forward destinations.
 │ (Admin Interface) │   │      (Apps)       │
 └───────────────────┘   └───────────────────┘
 ```
+
+
+
+## Branch: Development
+
+[![Circle CI](https://circleci.com/gh/experimental-platform/platform-central-gateway.svg?style=svg&circle-token=d8d407dd0b16973dd5bcc10e474db66e9036ce65)](https://circleci.com/gh/experimental-platform/platform-central-gateway)
+
+All development branches stem from and (re-)integrate here.
+
+## Branch: Master
+
+[![Circle CI](https://circleci.com/gh/experimental-platform/platform-central-gateway/tree/master.svg?style=svg&circle-token=d8d407dd0b16973dd5bcc10e474db66e9036ce65)](https://circleci.com/gh/experimental-platform/platform-central-gateway/tree/master)
+
+This is the base for &alpha;-channel releases.
