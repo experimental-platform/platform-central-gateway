@@ -1,6 +1,6 @@
 FROM experimentalplatform/ubuntu:latest
 
-COPY central-gateway /central-gateway
+COPY platform-central-gateway /central-gateway
 
 ENTRYPOINT ["/central-gateway"]
 
