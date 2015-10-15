@@ -4,4 +4,4 @@ set -e
 SRC_PATH=$(pwd)
 PROJECT_NAME="github.com/experimental-platform/platform-central-gateway"
 
-docker run -v "${SRC_PATH}:/go/src/$PROJECT_NAME" -w "/go/src/$PROJECT_NAME" golang:1.4 /bin/bash -c 'go get -t -d && go test && go build -v'
+docker run -v "${SRC_PATH}:/go/src/$PROJECT_NAME" -w "/go/src/$PROJECT_NAME" -e GO15VENDOREXPERIMENT=1 golang:1.5 /bin/bash -c './install-glide.sh && glide up && go test -v && go build -v'
