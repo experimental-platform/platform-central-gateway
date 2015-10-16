@@ -1,0 +1,4 @@
+package: main
+import:
+  - package: github.com/stretchr/testify
+    ref: v1.0
