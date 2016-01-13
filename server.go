@@ -19,10 +19,12 @@ var apps_target *string
 var management_target *string
 var apps_proxy *httputil.ReverseProxy
 var management_proxy *httputil.ReverseProxy
+var devices_proxy *httputil.ReverseProxy
 
 var ADMIN_NAME = "admin"
 var ADMIN_PATH = "/" + ADMIN_NAME
 var ADMIN_FULL_PATH = ADMIN_PATH + "/"
+var DEVICES_PATH = "/devices/"
 
 func defaultHandler(w http.ResponseWriter, req *http.Request) {
 	if DEBUG {
@@ -33,6 +35,8 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, ADMIN_FULL_PATH, http.StatusMovedPermanently)
 	} else if strings.HasPrefix(req.URL.String(), ADMIN_FULL_PATH) {
 		management_proxy.ServeHTTP(w, req)
+	} else if strings.HasPrefix(req.URL.String(), DEVICES_PATH) {
+		devices_proxy.ServeHTTP(w, req)
 	} else {
 		apps_proxy.ServeHTTP(w, req)
 	}
@@ -50,9 +54,11 @@ func main() {
 
 	apps_target_url, _ := url.Parse(*apps_target)
 	management_target_url, _ := url.Parse(*management_target)
+	devices_target_url, _ := url.Parse("http://127.0.0.1:9200")
 
 	apps_proxy = httputil.NewSingleHostReverseProxy(apps_target_url)
 	management_proxy = httputil.NewSingleHostReverseProxy(management_target_url)
+	devices_proxy = httputil.NewSingleHostReverseProxy(devices_target_url)
 
 	go func() {
 		signal_chan := make(chan os.Signal, 10)
