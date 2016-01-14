@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRedirectToAdminOnSlash(t *testing.T) {
@@ -59,7 +60,7 @@ func TestAdminAccessRedirectSlash(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	target_url, _ := url.Parse("http://example.com/")
-	apps_proxy = httputil.NewSingleHostReverseProxy(target_url)
+	apps_proxy = newSwitchingProxy(target_url)
 	management_proxy = httputil.NewSingleHostReverseProxy(target_url)
 	exit := m.Run()
 	os.Exit(exit)
