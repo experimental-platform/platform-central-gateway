@@ -2,3 +2,7 @@ package: main
 import:
   - package: github.com/stretchr/testify
     ref: v1.0
+  - package: github.com/koding/websocketproxy
+    ref: 870493fd19c48c3e71eaf5c5e03e07658f73bd26
+  - package: github.com/gorilla/websocket
+    ref: 3986be78bf859e01f01af631ad76da5b269d270c
