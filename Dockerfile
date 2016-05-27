@@ -1,4 +1,4 @@
-FROM experimentalplatform/ubuntu:latest
+FROM quay.io/experimentalplatform/ubuntu:latest
 
 COPY platform-central-gateway /central-gateway
 
