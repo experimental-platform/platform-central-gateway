@@ -30,6 +30,8 @@ var management_proxy *httputil.ReverseProxy
 var devices_proxy *httputil.ReverseProxy
 var soulNginxProxy *SwitchingProxy
 
+var gatewayAppMap *hostToProxyMap
+
 var ADMIN_NAME = "admin"
 var ADMIN_PATH = "/" + ADMIN_NAME
 var ADMIN_FULL_PATH = ADMIN_PATH + "/"
@@ -52,11 +54,9 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 			apps_proxy.ServeHTTP(w, req)
 		}
 	} else {
-		for appExternalAccess, appProxy := range hostToProxyMap {
-			if req.Host == appExternalAccess {
-				appProxy.ServeHTTP(w, req)
-				return
-			}
+		if appProxy := gatewayAppMap.matchHost(req.Host); appProxy != nil {
+			appProxy.ServeHTTP(w, req)
+			return
 		}
 
 		// default backend
@@ -157,13 +157,14 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = reloadProxies()
+		gatewayAppMap = &hostToProxyMap{}
+		proxyCount, err := gatewayAppMap.reload()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("%d app proxy entries loaded\n", len(hostToProxyMap))
+		fmt.Printf("%d app proxy entries loaded\n", proxyCount)
 	}
 
 	proxy := createProxy()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"sync"
 
 	"golang.org/x/net/context"
 
@@ -13,6 +14,71 @@ import (
 	skvs "github.com/experimental-platform/platform-skvs/client"
 	"github.com/vishvananda/netlink"
 )
+
+var macvlanMap = map[string]string{
+	"gitlab": "engitlab0",
+}
+
+type hostToProxyMap struct {
+	actualMap map[string]*SwitchingProxy
+	mutex     sync.RWMutex
+}
+
+func (hpm *hostToProxyMap) reload() (int, error) {
+	newMap := make(map[string]*SwitchingProxy)
+	boxName, err := skvs.Get("ptw/node_name")
+	if err != nil {
+		return 0, err
+	}
+
+	fmt.Println("new Host=>IP mapping:")
+	for appName, ifName := range macvlanMap {
+		appIP, err := getAppIP(appName)
+		if err != nil {
+			return 0, err
+		}
+
+		url, err := url.Parse(fmt.Sprintf("http://%s:80/", appIP))
+		if err != nil {
+			return 0, err
+		}
+		appProxy := newSwitchingProxy(url)
+
+		ptwAddr := fmt.Sprintf("%s.%s.protonet.info", appName, boxName)
+		newMap[ptwAddr] = appProxy
+		fmt.Printf("  %s => %s\n", ptwAddr, appIP)
+
+		appInterface, err := net.InterfaceByName(ifName)
+		if err != nil {
+			return 0, err
+		}
+
+		extAppIP, err := getExtInterfaceIP(appInterface.Name)
+		if err != nil {
+			return 0, err
+		}
+
+		newMap[extAppIP] = appProxy
+		fmt.Printf("  %s => %s\n", extAppIP, appIP)
+	}
+
+	hpm.mutex.Lock()
+	hpm.actualMap = newMap
+	defer hpm.mutex.Unlock()
+
+	return len(newMap), nil
+}
+
+func (hpm *hostToProxyMap) matchHost(host string) *SwitchingProxy {
+	hpm.mutex.RLock()
+	defer hpm.mutex.RUnlock()
+
+	if proxy, ok := hpm.actualMap[host]; ok {
+		return proxy
+	}
+
+	return nil
+}
 
 func getRealDeviceIPs() ([]string, error) {
 	var addresses []string
@@ -37,13 +103,6 @@ func getRealDeviceIPs() ([]string, error) {
 
 	return addresses, nil
 }
-
-var macvlanMap = map[string]string{
-	"gitlab": "engitlab0",
-}
-
-var hostToIPMap map[string]string
-var hostToProxyMap map[string]*SwitchingProxy
 
 func getAppIP(appName string) (string, error) {
 	cli, err := client.NewEnvClient()
@@ -99,48 +158,4 @@ func getExtInterfaceIP(interfaceName string) (string, error) {
 	}
 
 	return "", fmt.Errorf("Interface '%s' not found", interfaceName)
-}
-
-func reloadProxies() error {
-	newHostToProxyMap := make(map[string]*SwitchingProxy)
-	boxName, err := skvs.Get("ptw/node_name")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("new Host=>IP mapping:")
-	for appName, ifName := range macvlanMap {
-		appIP, err := getAppIP(appName)
-		if err != nil {
-			return err
-		}
-
-		// TODO hostToProxyMap
-		url, err := url.Parse(fmt.Sprintf("http://%s:80/", appIP))
-		if err != nil {
-			return err
-		}
-		appProxy := newSwitchingProxy(url)
-
-		ptwAddr := fmt.Sprintf("%s.%s.protonet.info", appName, boxName)
-		newHostToProxyMap[ptwAddr] = appProxy
-		fmt.Printf("  %s => %s\n", ptwAddr, appIP)
-
-		appInterface, err := net.InterfaceByName(ifName)
-		if err != nil {
-			return err
-		}
-
-		extAppIP, err := getExtInterfaceIP(appInterface.Name)
-		if err != nil {
-			return err
-		}
-
-		newHostToProxyMap[extAppIP] = appProxy
-		fmt.Printf("  %s => %s\n", extAppIP, appIP)
-	}
-
-	hostToProxyMap = newHostToProxyMap
-
-	return nil
 }
