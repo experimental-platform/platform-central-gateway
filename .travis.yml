@@ -2,6 +2,6 @@ sudo: false
 services:
   - docker
 install:
-  - ./ci-build.sh
+  - curl -L https://raw.githubusercontent.com/experimental-platform/build-scripts/master/go-build.sh | bash
 script:
   - curl -L https://raw.githubusercontent.com/experimental-platform/build-scripts/master/buildimg.sh | bash
