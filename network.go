@@ -15,13 +15,18 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-var macvlanMap = map[string]string{
-	"gitlab": "engitlab0",
-}
-
 type hostToProxyMap struct {
 	actualMap map[string]*SwitchingProxy
 	mutex     sync.RWMutex
+}
+
+func getAppMacvlanMap() map[string]string {
+	result := make(map[string]string)
+	if _, err := skvs.Get("gitlab/enabled"); err == nil {
+		result["gitlab"] = "engitlab0"
+	}
+
+	return result
 }
 
 func (hpm *hostToProxyMap) reload() (int, error) {
@@ -32,7 +37,7 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 	}
 
 	fmt.Println("new Host=>IP mapping:")
-	for appName, ifName := range macvlanMap {
+	for appName, ifName := range getAppMacvlanMap() {
 		appIP, err := getAppIP(appName)
 		if err != nil {
 			return 0, err
