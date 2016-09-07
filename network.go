@@ -20,10 +20,10 @@ type hostToProxyMap struct {
 	mutex     sync.RWMutex
 }
 
-func getAppMacvlanMap() map[string]string {
-	result := make(map[string]string)
+func getAppMacvlanMap() []string {
+	result := make([]string, 0)
 	if _, err := skvs.Get("gitlab/enabled"); err == nil {
-		result["gitlab"] = "engitlab0"
+		result = append(result, "gitlab")
 	}
 
 	return result
@@ -37,7 +37,8 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 	}
 
 	fmt.Println("new Host=>IP mapping:")
-	for appName, ifName := range getAppMacvlanMap() {
+	for _, appName := range getAppMacvlanMap() {
+		ifName := appIfName(appName)
 		appIP, err := getAppIP(appName)
 		if err != nil {
 			return 0, err
@@ -55,7 +56,13 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 
 		appInterface, err := net.InterfaceByName(ifName)
 		if err != nil {
-			return 0, err
+			if err = createAppInterface(appName); err != nil {
+				return 0, err
+			}
+
+			if appInterface, err = net.InterfaceByName(ifName); err != nil {
+				return 0, err
+			}
 		}
 
 		extAppIP, err := getExtInterfaceIP(appInterface.Name)

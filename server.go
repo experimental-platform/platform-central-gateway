@@ -170,8 +170,18 @@ func main() {
 	proxy := createProxy()
 
 	go func() {
-		fmt.Printf("Listening\n")
-		err := http.ListenAndServe("0.0.0.0:80", proxy)
+		trafficEndpoint := "0.0.0.0:80"
+		fmt.Printf("Listening at %s\n", trafficEndpoint)
+		err := http.ListenAndServe(trafficEndpoint, proxy)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	go func() {
+		controlEndpoint := "127.0.0.1:81"
+		fmt.Printf("Control endpoint listening at %s\n", controlEndpoint)
+		err := http.ListenAndServe(controlEndpoint, getControlHandler())
 		if err != nil {
 			panic(err)
 		}
