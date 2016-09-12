@@ -46,7 +46,7 @@ func createAppInterface(appName string) error {
 	ifName := appIfName(appName)
 	_, err := net.InterfaceByName(ifName)
 	if err == nil {
-		log.Errorf("Interface '%s' already exists.", ifName)
+		log.Infof("Interface '%s' already exists.\n", ifName)
 		return nil
 	}
 
