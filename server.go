@@ -187,15 +187,13 @@ func main() {
 		}
 	}()
 
-	// TODO figure out (re)generation of TLS certs without haproxy
-	// TODO do we even need to locally listen on 443?
-	/*go func() {
+	go func() {
 		fmt.Printf("Listening (TLS)\n")
-		err := http.ListenAndServeTLS("0.0.0.0:443", "/data/haproxy/ssl/pem", "/data/haproxy/ssl/key", proxy)
+		err := http.ListenAndServeTLS("0.0.0.0:443", "/data/ssl/pem", "/data/ssl/key", proxy)
 		if err != nil {
 			panic(err)
 		}
-	}()*/
+	}()
 
 	signal_chan := make(chan os.Signal, 10)
 	signal.Notify(signal_chan, syscall.SIGUSR1)
