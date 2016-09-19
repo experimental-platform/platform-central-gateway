@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/experimental-platform/platform-central-gateway/proxy"
+
 	"github.com/elazarl/goproxy"
 	"github.com/koding/websocketproxy"
 )
@@ -28,7 +30,7 @@ var management_target *string
 var apps_proxy *SwitchingProxy
 var management_proxy *httputil.ReverseProxy
 var devices_proxy *httputil.ReverseProxy
-var soulNginxProxy *SwitchingProxy
+var soulNginxProxy http.Handler
 
 var gatewayAppMap *hostToProxyMap
 
@@ -218,7 +220,7 @@ func createReverseProxyToContainer(containerName string, port uint16) (*httputil
 	return httputil.NewSingleHostReverseProxy(url), nil
 }
 
-func createSwitchingProxyToContainer(containerName string, port uint16) (*SwitchingProxy, error) {
+func createSwitchingProxyToContainer(containerName string, port uint16) (http.Handler, error) {
 	containerIP, err := getAppIP(containerName)
 	if err != nil {
 		return nil, err
@@ -229,5 +231,5 @@ func createSwitchingProxyToContainer(containerName string, port uint16) (*Switch
 		return nil, err
 	}
 
-	return newSwitchingProxy(url), nil
+	return proxy.New(url), nil
 }

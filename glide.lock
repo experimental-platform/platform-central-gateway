@@ -1,5 +1,5 @@
 hash: f9bd48eea66b3c338697049f62c687632652390394d32e8fefb5a359d2cae910
-updated: 2016-09-07T10:53:46.322682073+02:00
+updated: 2016-09-19T14:03:39.5527229+02:00
 imports:
 - name: github.com/docker/distribution
   version: 41f383fb9a3b4e3ff428a92db4f7836f8053058b
@@ -44,7 +44,7 @@ imports:
   subpackages:
   - client
 - name: github.com/experimental-platform/platform-utils
-  version: 535b8af0f9b55eab9ad8a52c19fc905c4d78ef6f
+  version: 7e2b609a94b703d0710d2ed461856536daf0ff34
   subpackages:
   - netutil
 - name: github.com/gorilla/context
