@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
@@ -90,7 +91,14 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	resp, err := p.transport.RoundTrip(req)
 	if err != nil {
 		log.Errorf("proxying '%s': %s\n", req.RequestURI, err.Error())
+		rw.Header().Set("Content-Type", "text/html")
 		rw.WriteHeader(http.StatusBadGateway)
+		f, err := os.Open("/502.html")
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		io.Copy(rw, f)
 		return
 	}
 
