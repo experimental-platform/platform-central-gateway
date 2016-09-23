@@ -15,8 +15,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/experimental-platform/platform-central-gateway/proxy"
+
 	"github.com/elazarl/goproxy"
-	"github.com/koding/websocketproxy"
 )
 
 const enableDokkuGateway bool = false
@@ -25,10 +26,10 @@ var DEBUG = false
 var if_bind *string
 var apps_target *string
 var management_target *string
-var apps_proxy *SwitchingProxy
+var apps_proxy http.Handler
 var management_proxy *httputil.ReverseProxy
 var devices_proxy *httputil.ReverseProxy
-var soulNginxProxy *SwitchingProxy
+var soulNginxProxy http.Handler
 
 var gatewayAppMap *hostToProxyMap
 
@@ -62,39 +63,6 @@ func defaultHandler(w http.ResponseWriter, req *http.Request) {
 		// default backend
 		soulNginxProxy.ServeHTTP(w, req)
 	}
-}
-
-type SwitchingProxy struct {
-	httpProxy      http.Handler
-	websocketProxy http.Handler
-}
-
-func newSwitchingProxy(backend *url.URL) *SwitchingProxy {
-	wsBackend := *backend
-	wsBackend.Scheme = "ws"
-	return &SwitchingProxy{
-		httpProxy:      httputil.NewSingleHostReverseProxy(backend),
-		websocketProxy: websocketproxy.NewProxy(&wsBackend),
-	}
-}
-
-func (p *SwitchingProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if isWebsocket(req) {
-		// we don't use https explicitly, ssl termination is done here
-		req.URL.Scheme = "ws"
-		p.websocketProxy.ServeHTTP(rw, req)
-		return
-	}
-
-	p.httpProxy.ServeHTTP(rw, req)
-}
-
-func isWebsocket(req *http.Request) bool {
-	if strings.ToLower(req.Header.Get("Upgrade")) != "websocket" ||
-		!strings.Contains(strings.ToLower(req.Header.Get("Connection")), "upgrade") {
-		return false
-	}
-	return true
 }
 
 func createProxy() *goproxy.ProxyHttpServer {
@@ -147,7 +115,7 @@ func main() {
 		management_target_url, _ := url.Parse(*management_target)
 		devices_target_url, _ := url.Parse("http://127.0.0.1:9200")
 
-		apps_proxy = newSwitchingProxy(apps_target_url)
+		apps_proxy = proxy.New(apps_target_url)
 		management_proxy = httputil.NewSingleHostReverseProxy(management_target_url)
 		devices_proxy = httputil.NewSingleHostReverseProxy(devices_target_url)
 	} else {
@@ -218,7 +186,7 @@ func createReverseProxyToContainer(containerName string, port uint16) (*httputil
 	return httputil.NewSingleHostReverseProxy(url), nil
 }
 
-func createSwitchingProxyToContainer(containerName string, port uint16) (*SwitchingProxy, error) {
+func createSwitchingProxyToContainer(containerName string, port uint16) (http.Handler, error) {
 	containerIP, err := getAppIP(containerName)
 	if err != nil {
 		return nil, err
@@ -229,5 +197,5 @@ func createSwitchingProxyToContainer(containerName string, port uint16) (*Switch
 		return nil, err
 	}
 
-	return newSwitchingProxy(url), nil
+	return proxy.New(url), nil
 }

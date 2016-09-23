@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/experimental-platform/platform-central-gateway/proxy"
 
 	"golang.org/x/net/context"
 
@@ -18,7 +21,7 @@ import (
 )
 
 type hostToProxyMap struct {
-	actualMap      map[string]*SwitchingProxy
+	actualMap      map[string]http.Handler
 	mutex          sync.RWMutex
 	watcherStopper chan struct{}
 	watcherWG      sync.WaitGroup
@@ -97,7 +100,7 @@ func getAppMacvlanMap() []string {
 }
 
 func (hpm *hostToProxyMap) reload() (int, error) {
-	newMap := make(map[string]*SwitchingProxy)
+	newMap := make(map[string]http.Handler)
 	boxName, err := skvs.Get("ptw/node_name")
 	if err != nil {
 		return 0, err
@@ -116,7 +119,7 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		appProxy := newSwitchingProxy(url)
+		appProxy := proxy.New(url)
 
 		ptwAddr := fmt.Sprintf("%s.%s.protonet.info", appName, boxName)
 		newMap[ptwAddr] = appProxy
@@ -155,7 +158,7 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 	return len(newMap), nil
 }
 
-func (hpm *hostToProxyMap) matchHost(host string) *SwitchingProxy {
+func (hpm *hostToProxyMap) matchHost(host string) http.Handler {
 	hpm.mutex.RLock()
 	defer hpm.mutex.RUnlock()
 
