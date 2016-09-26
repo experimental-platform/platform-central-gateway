@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -19,6 +20,19 @@ func getControlHandler() http.Handler {
 	router.HandleFunc("/reload-app-networking", func(w http.ResponseWriter, req *http.Request) {
 
 	})
+
+	// TODO use an actual dynamic application list
+	// that will be possible once app installer arrives
+	router.HandleFunc("/apps/", func(w http.ResponseWriter, req *http.Request) {
+		apps := getAppMacvlanMap()
+		data, err := json.Marshal(apps)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(data)
+	}).Methods("GET")
 
 	router.HandleFunc("/apps/{appName}/macvlan", func(w http.ResponseWriter, req *http.Request) {
 		appName, ok := mux.Vars(req)["appName"]
