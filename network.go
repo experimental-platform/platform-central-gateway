@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
@@ -96,6 +97,16 @@ func getAppMacvlanMap() []string {
 		result = append(result, "gitlab")
 	}
 
+	data, err := json.Marshal(&result)
+	if err != nil {
+		log.Errorf("Error saving application list to SKVS: %s", err.Error())
+	}
+
+	err = skvs.Set("applist", string(data))
+	if err != nil {
+		log.Errorf("Error saving application list to SKVS: %s", err.Error())
+	}
+
 	return result
 }
 
@@ -141,6 +152,11 @@ func (hpm *hostToProxyMap) reload() (int, error) {
 		extAppIP, err := getExtInterfaceIP(appInterface.Name)
 		if err != nil {
 			return 0, err
+		}
+
+		err = skvs.Set(fmt.Sprintf("apps/%s/last_macvlan_ip", appName), extAppIP)
+		if err != nil {
+			log.Errorf("Error saving last external IP of '%s' to SKVS: %s", appName, err.Error())
 		}
 
 		newMap[extAppIP] = appProxy
