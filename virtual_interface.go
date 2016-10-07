@@ -81,18 +81,22 @@ func getInterfaceIP(ifName string) (string, error) {
 		return "", err
 	}
 
-	// TODO: what about len(addr) > 1 ?
-	if len(addrs) == 0 {
-		return "", fmt.Errorf("the device %s has no network addresses", ifName)
+	// iterate over the addresses
+	// and return first IPv4 addr
+	for _, address := range addrs {
+		cidr := address.String()
+		ip, _, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return "", fmt.Errorf("error parsing CIDR '%s'", cidr)
+		}
+
+		if len(ip.To4()) == net.IPv4len {
+			return ip.String(), nil
+		}
 	}
 
-	cidr := addrs[0].String()
-	ip, _, err := net.ParseCIDR(cidr)
-	if err != nil {
-		return "", fmt.Errorf("error parsing CIDR '%s'", cidr)
-	}
-
-	return ip.String(), nil
+	// found no IPv4 addresses, error out
+	return "", fmt.Errorf("the device %s has no IPv4 addresses", ifName)
 }
 
 func getAppExternalIP(appName string) (string, error) {
