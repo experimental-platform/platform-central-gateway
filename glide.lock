@@ -1,74 +1,79 @@
 hash: f9bd48eea66b3c338697049f62c687632652390394d32e8fefb5a359d2cae910
-updated: 2016-09-19T14:03:39.5527229+02:00
+updated: 2016-12-07T13:06:08.677620989+01:00
 imports:
 - name: github.com/docker/distribution
-  version: 41f383fb9a3b4e3ff428a92db4f7836f8053058b
+  version: 15dc1296affa926b873ce12cde1890a387a046f2
   subpackages:
-  - reference
   - digest
+  - reference
 - name: github.com/docker/engine-api
-  version: f9cef590446e4e6073b49b652f47a337b897c1a3
+  version: 4290f40c056686fcaa5c9caf02eac1dde9315adf
   subpackages:
   - client
-  - types
-  - types/filters
-  - types/network
   - client/transport
   - client/transport/cancellable
+  - types
+  - types/blkiodev
   - types/container
+  - types/filters
+  - types/mount
+  - types/network
   - types/reference
   - types/registry
+  - types/strslice
   - types/swarm
   - types/time
   - types/versions
-  - types/mount
-  - types/blkiodev
-  - types/strslice
 - name: github.com/docker/go-connections
-  version: 0bad1a3951398f88ef4dd75fdb42af374430be89
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
+  - nat
   - sockets
   - tlsconfig
-  - nat
 - name: github.com/docker/go-units
-  version: 2c1805a1c750c4ea749899f49221e1d5f3e5ce42
+  version: e30f1e79f3cd72542f2026ceec18d3bd67ab859c
 - name: github.com/docker/libcontainer
-  version: 83a102cc68a09d890cce3b6c2e5c14c49e6373a0
+  version: 5dc7ba0f24332273461e45bc49edcb4d5aa6c44c
   subpackages:
   - netlink
   - system
 - name: github.com/elazarl/goproxy
-  version: de25c6ed252fdc01e23dae49d6a86742bd790b12
+  version: 6016d2397298b0750eeb06f4d24e03cfd7e45c77
+- name: github.com/experimental-platform/platform-central-gateway
+  version: 93d6f42a46631f80fffc32e95340f04569de6d22
+  subpackages:
+  - proxy
 - name: github.com/experimental-platform/platform-skvs
-  version: 39dadca7e14d61a029794fc7d6e172c2ce8824c2
+  version: 8dc7ac902fe9726a53f6091c9d5087b0098035a9
   subpackages:
   - client
 - name: github.com/experimental-platform/platform-utils
-  version: 7e2b609a94b703d0710d2ed461856536daf0ff34
+  version: 6b04ed96676373d511e3144ca6e39266a63a3f8e
   subpackages:
+  - dockerutil
   - netutil
 - name: github.com/gorilla/context
-  version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 0a192a193177452756c362c20087ddafcf6829c4
+  version: 757bef944d0f21880861c2dd9c871ca543023cba
 - name: github.com/gorilla/websocket
   version: 3986be78bf859e01f01af631ad76da5b269d270c
 - name: github.com/koding/websocketproxy
   version: 870493fd19c48c3e71eaf5c5e03e07658f73bd26
 - name: github.com/Microsoft/go-winio
-  version: ce2922f643c8fd76b46cadc7f404a06282678b34
+  version: 24a3e3d3fc7451805e09d11e11e95d9a0a4f205e
 - name: github.com/milosgajdos83/tenus
   version: 104e65ade0fa42600476ac8786335b5e128797e4
 - name: github.com/opencontainers/runc
-  version: b79076544e2edbe4180b7bc424d793dd6a8f1f90
+  version: 47ea5c75ebeb40a317d2cfa95f9c3536c00c1eea
   subpackages:
   - libcontainer/user
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/stretchr/testify
   version: 232e8563676cd15c3a36ba5e675ad4312ac4cb11
 - name: github.com/vishvananda/netlink
-  version: 63381f39fceb1c5c13503a90e1c2603caeafe3c5
+  version: 266f02d3a80fb75c33302a2c91e7632ec33c1f32
   subpackages:
   - nl
 - name: github.com/vishvananda/netns
@@ -79,7 +84,8 @@ imports:
   - context
   - proxy
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: 9a2e24c3733eddc63871eda99f253e2db29bd3b9
   subpackages:
+  - unix
   - windows
 testImports: []
