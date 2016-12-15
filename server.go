@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/experimental-platform/platform-central-gateway/proxy"
+	skvs "github.com/experimental-platform/platform-skvs/client"
 
 	"github.com/elazarl/goproxy"
 )
@@ -99,6 +101,35 @@ func createProxy() *goproxy.ProxyHttpServer {
 	return proxy
 }
 
+func getSSLCert(c *skvs.Client) (string, string, error) {
+	if c == nil {
+		var err error
+		c, err = skvs.NewFromDocker()
+		if err != nil {
+			return "", "", fmt.Errorf("getSSLCert: %s", err.Error())
+		}
+	}
+
+	pemData, pemErr := c.Get("ssl/pem")
+	keyData, keyErr := c.Get("ssl/key")
+	if keyErr != nil || pemErr != nil {
+		fmt.Println("Failed to load certificate from SKVS - defaulting to pre-generated self-signed.")
+		return "/data/ssl/pem", "/data/ssl/key", nil
+	}
+
+	err := ioutil.WriteFile("/tmp/gateway_pem", []byte(pemData), 0644)
+	if err != nil {
+		return "", "", fmt.Errorf("getSSLCert: %s", err.Error())
+	}
+	err = ioutil.WriteFile("/tmp/gateway_key", []byte(keyData), 0644)
+	if err != nil {
+		return "", "", fmt.Errorf("getSSLCert: %s", err.Error())
+	}
+
+	fmt.Println("Loaded TLS certificate from SKVS")
+	return "/tmp/gateway_pem", "/tmp/gateway_key", nil
+}
+
 func main() {
 	var err error
 	if_bind = flag.String("interface", "127.0.0.1:3001", "server interface to bind")
@@ -156,8 +187,13 @@ func main() {
 	}()
 
 	go func() {
+		pemPath, keyPath, err := getSSLCert(nil)
+		if err != nil {
+			panic(err)
+		}
+
 		fmt.Printf("Listening (TLS)\n")
-		err := http.ListenAndServeTLS("0.0.0.0:443", "/data/ssl/pem", "/data/ssl/key", proxy)
+		err = http.ListenAndServeTLS("0.0.0.0:443", pemPath, keyPath, proxy)
 		if err != nil {
 			panic(err)
 		}
