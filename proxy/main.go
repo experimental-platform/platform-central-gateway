@@ -106,6 +106,11 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		resp.Header.Del(h)
 	}
 
+	// Retain SSL information.
+	if req.TLS != nil {
+		resp.Header.Set("X-Forwarded-Proto", "https")
+	}
+
 	copyHeaders(rw.Header(), resp.Header)
 	rw.WriteHeader(resp.StatusCode)
 	io.Copy(rw, resp.Body)
