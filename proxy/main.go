@@ -84,11 +84,25 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO retain prior proxy info
+
+	// give more sense to tcpdump output ;)
+	// TODO: add hostname and software version
+	req.Header.Add("Via", "XXX (central-gateway, development version)")
+
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 		req.Header.Set("X-Forwarded-For", clientIP)
 	}
 
+	// Retain SSL information.
+	protocol := "http"
+	if req.TLS != nil {
+		protocol = "https"
+	}
+	req.Header.Set("X-Forwarded-Proto", protocol)
+
+	// the actual proxying is going on here!
 	resp, err := p.transport.RoundTrip(req)
+
 	if err != nil {
 		log.Errorf("proxying '%s': %s\n", req.RequestURI, err.Error())
 		rw.Header().Set("Content-Type", "text/html")
@@ -105,12 +119,8 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, h := range hopHeaders {
 		resp.Header.Del(h)
 	}
-
-	// Retain SSL information.
-	if req.TLS != nil {
-		resp.Header.Set("X-Forwarded-Proto", "https")
-	}
-
+	// replace server software, so tcpdump on the external connection (and wget -S) makes more sense.
+	resp.Header.Set("Server", "central-gateway")
 	copyHeaders(rw.Header(), resp.Header)
 	rw.WriteHeader(resp.StatusCode)
 	io.Copy(rw, resp.Body)
