@@ -94,11 +94,14 @@ func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	// Retain SSL information.
-	protocol := "http"
-	if req.TLS != nil {
-		protocol = "https"
+	protocol := req.Header.Get("X-Forwarded-Proto")
+	if protocol == "" {
+		if req.TLS != nil {
+			req.Header.Set("X-Forwarded-Proto", "https")
+		} else {
+			req.Header.Set("X-Forwarded-Proto", "http")
+		}
 	}
-	req.Header.Set("X-Forwarded-Proto", protocol)
 
 	// the actual proxying is going on here!
 	resp, err := p.transport.RoundTrip(req)
