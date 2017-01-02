@@ -67,61 +67,62 @@ func copyHeaders(dst, src http.Header) {
 	}
 }
 
-func (p *Proxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if p.WebsocketEnabled && isWebsocket(req) {
+func (proxy *Proxy) ServeHTTP(clientResponseWriter http.ResponseWriter, clientRequest *http.Request) {
+	if proxy.WebsocketEnabled && isWebsocket(clientRequest) {
 		// we don't use https explicitly, ssl termination is done here
-		req.URL.Scheme = "ws"
-		p.websocketProxy.ServeHTTP(rw, req)
+		clientRequest.URL.Scheme = "ws"
+		proxy.websocketProxy.ServeHTTP(clientResponseWriter, clientRequest)
 		return
 	}
 
-	req.URL.Scheme = p.backend.Scheme
-	req.URL.Host = p.backend.Host
-	req.URL.Path = path.Join(p.backend.Path, req.URL.Path)
+	clientRequest.URL.Scheme = proxy.backend.Scheme
+	clientRequest.URL.Host = proxy.backend.Host
+	clientRequest.URL.Path = path.Join(proxy.backend.Path, clientRequest.URL.Path)
 
 	for _, h := range hopHeaders {
-		req.Header.Del(h)
+		clientRequest.Header.Del(h)
 	}
 
 	// TODO retain prior proxy info
+	// TODO: find out what 'prior proxy info' means
 
 	// give more sense to tcpdump output ;)
 	// TODO: add hostname and software version
-	req.Header.Add("Via", "XXX (central-gateway, development version)")
+	clientRequest.Header.Add("Via", "XXX (central-gateway, development version)")
 
-	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		req.Header.Set("X-Forwarded-For", clientIP)
+	if clientIP, _, err := net.SplitHostPort(clientRequest.RemoteAddr); err == nil {
+		clientRequest.Header.Set("X-Forwarded-For", clientIP)
 	}
 
 	// Retain SSL information.
 	protocol := "http"
-	if req.TLS != nil {
+	if clientRequest.TLS != nil {
 		protocol = "https"
 	}
-	req.Header.Set("X-Forwarded-Proto", protocol)
+	clientRequest.Header.Set("X-Forwarded-Proto", protocol)
 
 	// the actual proxying is going on here!
-	resp, err := p.transport.RoundTrip(req)
+	serverResponse, err := proxy.transport.RoundTrip(clientRequest)
 
 	if err != nil {
-		log.Errorf("proxying '%s': %s\n", req.RequestURI, err.Error())
-		rw.Header().Set("Content-Type", "text/html")
-		rw.WriteHeader(http.StatusBadGateway)
+		log.Errorf("proxying '%s': %s\n", clientRequest.RequestURI, err.Error())
+		clientResponseWriter.Header().Set("Content-Type", "text/html")
+		clientResponseWriter.WriteHeader(http.StatusBadGateway)
 		f, err := os.Open("/502.html")
 		if err != nil {
 			panic(err)
 		}
 		defer f.Close()
-		io.Copy(rw, f)
+		io.Copy(clientResponseWriter, f)
 		return
 	}
 
 	for _, h := range hopHeaders {
-		resp.Header.Del(h)
+		serverResponse.Header.Del(h)
 	}
 	// replace server software, so tcpdump on the external connection (and wget -S) makes more sense.
-	resp.Header.Set("Server", "central-gateway")
-	copyHeaders(rw.Header(), resp.Header)
-	rw.WriteHeader(resp.StatusCode)
-	io.Copy(rw, resp.Body)
+	serverResponse.Header.Set("Server", "central-gateway")
+	copyHeaders(clientResponseWriter.Header(), serverResponse.Header)
+	clientResponseWriter.WriteHeader(serverResponse.StatusCode)
+	io.Copy(clientResponseWriter, serverResponse.Body)
 }
